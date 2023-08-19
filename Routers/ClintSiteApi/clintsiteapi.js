@@ -61,7 +61,7 @@ app.get("/functionalarea/:_id", async (req, res) => {
   }
 });
 
-app.get("/clint_single_profile/:_id", async (req, res) => {
+app.get("/single_profile/:_id", async (req, res) => {
   try {
     var populate = [
       {
