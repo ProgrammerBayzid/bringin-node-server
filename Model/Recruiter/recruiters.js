@@ -19,12 +19,12 @@ const recruitersSchema = Schema(
     other: {
       totaljob: {
         type: Number,
-        default: 0
+        default: 0,
       },
       package: {
         type: "ObjectId",
-        ref : "Packages_buy",
-        default: null
+        ref: "Packages_buy",
+        default: null,
       },
       latestjobid: {
         type: "ObjectId",
@@ -33,7 +33,11 @@ const recruitersSchema = Schema(
       },
       company_verify: {
         type: Boolean,
-        default: false,
+        default: true,
+      },
+      manually_company_verify: {
+        type: Boolean,
+        default: true,
       },
       profile_verify: {
         type: Boolean,
@@ -45,13 +49,17 @@ const recruitersSchema = Schema(
       },
       company_verify_type: {
         type: Number,
-        default: 0,
+        default: 1,
       },
       company_docupload: {
         type: Boolean,
-        default: false,
+        default: true,
       },
       profile_docupload: {
+        type: Boolean,
+        default: false,
+      },
+      profile_other_docupload: {
         type: Boolean,
         default: false,
       },
@@ -77,15 +85,15 @@ const recruitersSchema = Schema(
       },
       candidate_view: {
         type: Number,
-        default: 0
+        default: 0,
       },
       total_step: { type: Number, default: 6 },
       incomplete: { type: Number, default: 1 },
       complete: { type: Number, default: 5 },
       online: { type: Boolean, default: false },
-      offlinedate:{
+      offlinedate: {
         type: Number,
-        default: new Date().getTime()
+        default: new Date().getTime(),
       },
       pushnotification: String,
       notification: {
@@ -118,7 +126,7 @@ recruitersSchema.methods.generateJWT = function () {
       number: this.number,
     },
     process.env.ACCESS_TOKEN,
-    { expiresIn: "7d" }
+    { expiresIn: "1y" }
   );
   return token;
 };

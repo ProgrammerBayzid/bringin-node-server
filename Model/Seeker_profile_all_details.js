@@ -45,7 +45,10 @@ const educationlavelSchema = Schema(
     startdate: Date,
     enddate: Date,
     otheractivity: String,
-    userid: String,
+    userid: {
+      type: "ObjectId",
+      ref: "User",
+    },
   },
   { timestamps: true }
 );
@@ -70,7 +73,10 @@ const skillSchema = Schema(
 const protfoliolinkSchema = Schema(
   {
     protfoliolink: String,
-    userid: String,
+    userid: {
+      type: "ObjectId",
+      ref: "User",
+    },
   },
   { timestamps: true }
 );
@@ -134,8 +140,7 @@ const allprofiledataSchema = Schema(
     ],
     skill: [
       {
-        type: "ObjectId",
-        ref: "default_Skill",
+        type: String,
       },
     ],
     protfoliolink: [

@@ -2,7 +2,6 @@ const express = require("express");
 var bodyParser = require("body-parser");
 const app = express();
 const cors = require("cors");
-const bringinRouter = require("./Routers/router");
 const signroute = require("./Routers/Sign_route/sign_route.js");
 const profile = require("./Routers/Profile/profile.js");
 const careerpreferance = require("./Routers/CarearPreferance/careerPreferences.js");
@@ -25,16 +24,17 @@ const clintsiteapi = require("./Routers/ClintSiteApi/clintsiteapi.js");
 const education = require("./Routers/Seeker/education");
 const emailtest = require("./Routers/Emailtest/emailtest");
 const { apps } = require("./Routers/Notification/notification");
-const admin_recriter = require("./Routers/AdminPanel/recruiter")
-const Package = require("./Routers/Recruiter/package")
+const admin_recriter = require("./Routers/AdminPanel/recruiter");
+const Package = require("./Routers/Recruiter/package");
+const compression = require("compression");
 
 app.use(express.json());
 app.use(cors());
+app.use(compression());
 app.use("/uploads", express.static("uploads"));
 app.use("/resumes", express.static("resumes"));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-app.use(bringinRouter);
 app.use(signroute);
 app.use(profile);
 app.use(careerpreferance);
@@ -57,13 +57,11 @@ app.use(clintsiteapi);
 app.use(education);
 app.use(emailtest);
 app.use(apps);
-app.use(admin_recriter)
-app.use(Package)
+app.use(admin_recriter);
+app.use(Package);
 
 app.get("/", (req, res) => {
-  let d = new Date();
-  console.log(d.getTime())
-  res.send(d);
+  res.send(req.headers);
 });
 
 module.exports = app;

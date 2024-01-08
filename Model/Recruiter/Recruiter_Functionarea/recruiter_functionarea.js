@@ -1,24 +1,23 @@
-const { Schema, model, } = require("mongoose");
-
+const { Schema, model } = require("mongoose");
 
 const recruiterexperticeSchema = Schema(
-    {
-        userid: {
-            type: "ObjectId",
-            ref: "Recruiters_profile"
-        },
-        jobid: "ObjectId",
-        expertice_area: {
-            type: "ObjectId",
-            ref: "FunctionalArea"
-        },
-        
-
-    },{timestamps: true}
-
+  {
+    userid: {
+      type: "ObjectId",
+      ref: "Recruiters_profile",
+    },
+    jobid: "ObjectId",
+    expertice_area: {
+      type: "ObjectId",
+      ref: "FunctionalArea",
+    },
+  },
+  { timestamps: true }
 );
 
+var Recruiter_Expartice = model(
+  "recruiter_functionalarea",
+  recruiterexperticeSchema
+);
 
-var Recruiter_Expartice = model("recruiter_functionalarea", recruiterexperticeSchema)
-
-module.exports = Recruiter_Expartice
+module.exports = Recruiter_Expartice;

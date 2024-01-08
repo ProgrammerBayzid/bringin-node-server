@@ -1,0 +1,17 @@
+curl -X POST \
+  http://localhost:3002/single_notification_send \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "app_id": "74463dd2-b8de-4624-a679-0221b4b0af85",
+    "data": {
+        "your_data_key": "your_data_value"
+    },
+    "contents": {
+        "en": "Your notification message"
+    },
+    "headings": {
+        "en": "Your notification title"
+    },
+    "android_channel_id": "39d13464-1a8e-4fa7-88ea-e42d8af163f0",
+    "playerid": "2d2c78bf-74dd-41b1-9b58-8491b053adf0"
+}'

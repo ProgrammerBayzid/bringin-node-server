@@ -13,23 +13,47 @@ const {
 const {
   ProfileVerify,
 } = require("../../Model/Recruiter/Verify/profile_verify.js");
+
+const sgMail = require('@sendgrid/mail')
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+
+app.post("/email_test", async (req, res) => {
+  const msg = {
+    to: 'sasaharukh@gmail.com', // Change to your recipient
+    from: 'hello@unbolt.co', // Change to your verified sender
+    subject: 'Sending with SendGrid is Fun',
+    text: 'and easy to do anywhere, even with Node.js',
+    html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+  }
+  sgMail
+    .send(msg)
+    .then(() => {
+      console.log('Email sent')
+      return res.status(200).send("send successfull");
+    })
+    .catch((error) => {
+      console.error(error)
+      return res.status(400).json({ error: error });
+    })
+});
+
+
 const transportar = nodemailer.createTransport({
-  // service: "gmail",
-  // auth: {
-  //     "user": "bringin.sdk@gmail.com",
-  //     "pass": "ovzkmudorqbzttju"
-  // }
-  host: "mail.bringin.io",
+  host: "premium89-1.web-hosting.com",
   port: 465,
   auth: {
-    user: "notifications@bringin.io",
-    pass: "@Notifications.1995",
+    user: "notifications@unbolt.co",
+    pass: "Notifications@Unbolt",
   },
 });
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * 9000 + 1000);
 }
+
+
 
 const multer = require("multer");
 const storage = multer.diskStorage({
@@ -49,24 +73,23 @@ app.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-        if (err) {
-          res.json({ message: "invalid token" });
-        } else {
-          const _id = authdata._id;
-          if (req.body.type == 1) {
-            var OTP = getRandomInt(4);
-            console.log(OTP);
-            const otp = await Otp({ number: authdata.number, otp: OTP });
-            const salt = await bcrypt.genSalt(10);
-            otp.otp = await bcrypt.hash(otp.otp, salt);
-            await otp.save();
-            const mailoption = {
-              from: "notifications@bringin.io",
-              to: req.body.email,
-              subject: "Your Bringin Account Verification Code",
-              text: `Otp is ${OTP}`,
-              html: `
+      const token = req.token;
+      const _id = req.userId;
+      const number = req.userNumber;
+
+      if (req.body.type == 1) {
+        var OTP = getRandomInt(4);
+        console.log(OTP);
+        const otp = await Otp({ number: number, otp: OTP });
+        const salt = await bcrypt.genSalt(10);
+        otp.otp = await bcrypt.hash(otp.otp, salt);
+        await otp.save();
+        const mailoption = {
+          from: "notifications@bringin.io",
+          to: req.body.email,
+          subject: "Your Bringin Account Verification Code",
+          text: `Otp is ${OTP}`,
+          html: `
               
               <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head>
 <!--[if gte mso 15]>
@@ -222,23 +245,44 @@ direction: ltr;"
 
               
               `,
-            };
-            transportar.sendMail(mailoption, async (err, info) => {
-              if (err) {
-                res.status(400).send(err);
-              } else {
-                await Recruiters.findByIdAndUpdate(
-                  { _id: _id },
-                  { $set: { "other.profile_docupload": true } }
-                );
-                res.status(200).send("verification code send successfull");
-              }
-            });
-          } else if (req.body.type == 5) {
-            var verifydata = await ProfileVerify.findOne({ userid: _id });
-            if (verifydata == null) {
-              ProfileVerify({
-                userid: _id,
+        };
+        transportar.sendMail(mailoption, async (err, info) => {
+          if (err) {
+            res.status(400).send(err);
+          } else {
+            await Recruiters.findByIdAndUpdate(
+              { _id: _id },
+              { $set: { "other.profile_docupload": true } }
+            );
+            res.status(200).send("verification code send successfull");
+          }
+        });
+      } else if (req.body.type == 5) {
+        var verifydata = await ProfileVerify.findOne({ userid: _id });
+        if (verifydata == null) {
+          ProfileVerify({
+            userid: _id,
+            fieldname: null,
+            originalname: null,
+            encoding: null,
+            mimetype: null,
+            destination: null,
+            filename: null,
+            path: null,
+            size: 0,
+            type: req.body.type,
+            link: req.body.link,
+          }).save();
+          await Recruiters.findByIdAndUpdate(
+            { _id: _id },
+            { $set: { "other.profile_docupload": true } }
+          );
+          res.status(200).send("send successfull");
+        } else {
+          await ProfileVerify.findOneAndUpdate(
+            { userid: _id },
+            {
+              $set: {
                 fieldname: null,
                 originalname: null,
                 encoding: null,
@@ -249,41 +293,41 @@ direction: ltr;"
                 size: 0,
                 type: req.body.type,
                 link: req.body.link,
-              }).save();
-              await Recruiters.findByIdAndUpdate(
-                { _id: _id },
-                { $set: { "other.profile_docupload": true } }
-              );
-              res.status(200).send("send successfull");
-            } else {
-              await ProfileVerify.findOneAndUpdate(
-                { userid: _id },
-                {
-                  $set: {
-                    fieldname: null,
-                    originalname: null,
-                    encoding: null,
-                    mimetype: null,
-                    destination: null,
-                    filename: null,
-                    path: null,
-                    size: 0,
-                    type: req.body.type,
-                    link: req.body.link,
-                  },
-                }
-              );
-              await Recruiters.findByIdAndUpdate(
-                { _id: _id },
-                { $set: { "other.profile_docupload": true } }
-              );
-              res.status(200).send("send successfull");
+              },
             }
-          } else {
-            var verifydata = await ProfileVerify.findOne({ userid: _id });
-            if (verifydata == null) {
-              ProfileVerify({
-                userid: _id,
+          );
+          await Recruiters.findByIdAndUpdate(
+            { _id: _id },
+            { $set: { "other.profile_docupload": true } }
+          );
+          res.status(200).send("send successfull");
+        }
+      } else {
+        var verifydata = await ProfileVerify.findOne({ userid: _id });
+        if (verifydata == null) {
+          ProfileVerify({
+            userid: _id,
+            fieldname: req.file.fieldname,
+            originalname: req.file.originalname,
+            encoding: req.file.encoding,
+            mimetype: req.file.mimetype,
+            destination: req.file.destination,
+            filename: req.file.filename,
+            path: req.file.path,
+            size: req.file.size,
+            type: req.body.type,
+            link: "",
+          }).save();
+          await Recruiters.findByIdAndUpdate(
+            { _id: _id },
+            { $set: { "other.profile_docupload": true } }
+          );
+          res.status(200).send("send successfull");
+        } else {
+          await ProfileVerify.findOneAndUpdate(
+            { userid: _id },
+            {
+              $set: {
                 fieldname: req.file.fieldname,
                 originalname: req.file.originalname,
                 encoding: req.file.encoding,
@@ -294,39 +338,16 @@ direction: ltr;"
                 size: req.file.size,
                 type: req.body.type,
                 link: "",
-              }).save();
-              await Recruiters.findByIdAndUpdate(
-                { _id: _id },
-                { $set: { "other.profile_docupload": true } }
-              );
-              res.status(200).send("send successfull");
-            } else {
-              await ProfileVerify.findOneAndUpdate(
-                { userid: _id },
-                {
-                  $set: {
-                    fieldname: req.file.fieldname,
-                    originalname: req.file.originalname,
-                    encoding: req.file.encoding,
-                    mimetype: req.file.mimetype,
-                    destination: req.file.destination,
-                    filename: req.file.filename,
-                    path: req.file.path,
-                    size: req.file.size,
-                    type: req.body.type,
-                    link: "",
-                  },
-                }
-              );
-              await Recruiters.findByIdAndUpdate(
-                { _id: _id },
-                { $set: { "other.profile_docupload": true } }
-              );
-              res.status(200).send("send successfull");
+              },
             }
-          }
+          );
+          await Recruiters.findByIdAndUpdate(
+            { _id: _id },
+            { $set: { "other.profile_docupload": true } }
+          );
+          res.status(200).send("send successfull");
         }
-      });
+      }
     } catch (error) {
       res.status(404).send(error);
     }
@@ -335,34 +356,31 @@ direction: ltr;"
 
 app.post("/email_code_verify", tokenverify, (req, res) => {
   try {
-    jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-      if (err) {
-        res.json({ message: "invalid token" });
-      } else {
-        const _id = authdata._id;
-        const otpHolder = await Otp.find({
-          number: authdata.number,
-        });
-        if (otpHolder.length === 0)
-          return res.status(400).send("You use an Expired OTP!");
-        const rightOtpFind = otpHolder[otpHolder.length - 1];
-        const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
-        if (rightOtpFind.number === authdata.number && validUser) {
-          const OTPDelete = await Otp.deleteMany({
-            number: rightOtpFind.number,
-          });
-          await Recruiters.findByIdAndUpdate(
-            { _id: _id },
-            { $set: { "other.profile_verify": true } }
-          );
-          return res.status(200).json({
-            message: "Verified Succefully",
-          });
-        } else {
-          return res.status(400).send("Your OTP was wrong!");
-        }
-      }
+    const token = req.token;
+    const _id = req.userId;
+    const number = req.userNumber;
+
+    const otpHolder = Otp.find({
+      number: number,
     });
+    if (otpHolder.length === 0)
+      return res.status(400).send("You use an Expired OTP!");
+    const rightOtpFind = otpHolder[otpHolder.length - 1];
+    const validUser = bcrypt.compare(req.body.otp, rightOtpFind.otp);
+    if (rightOtpFind.number === number && validUser) {
+      Otp.deleteMany({
+        number: rightOtpFind.number,
+      });
+      Recruiters.findByIdAndUpdate(
+        { _id: _id },
+        { $set: { "other.profile_verify": true } }
+      );
+      return res.status(200).json({
+        message: "Verified Succefully",
+      });
+    } else {
+      return res.status(400).send("Your OTP was wrong!");
+    }
   } catch (error) {
     res.status(404).send(error);
   }

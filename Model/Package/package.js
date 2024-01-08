@@ -7,17 +7,13 @@ const packageSchema = Schema(
     chat: Number,
     amount: Number,
     currency: {
-        type: String,
-        default : "BDT"
+      type: String,
+      default: "BDT",
     },
-    duration_time: Number, 
+    duration_time: Number,
   },
   { timestamps: true }
 );
-
-
-
-
 
 var Package = model("Packages", packageSchema);
 

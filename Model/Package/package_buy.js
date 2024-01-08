@@ -11,20 +11,22 @@ const packageBuySchema = Schema(
             ref: "Recruiters_profile"
         },
         starddate: {
-            type: Number
+            type: Date
         },
         enddate: {
-            type: Number
+            type: Date
         },
         active_type: {
             type: Number,
             default: 1
         },
+        
         active: {
             type : Boolean,
             default: true
         },
-        transactionID: {}
+        transactionID: {},
+        expireAt: { type: Date,  expires: 11 , default: Date.now}
 
     },
     { timestamps: true }

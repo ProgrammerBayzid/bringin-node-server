@@ -1,10 +1,11 @@
-const { Schema, model, } = require("mongoose");
+const { Schema, model } = require("mongoose");
 
-const experienceSchema  =  Schema(
-    {
-        name: String
-    },{timestamps: true}
-   
+const experienceSchema = Schema(
+  {
+    name: String,
+    sortOrder: Number,
+  },
+  { timestamps: true }
 );
 
 var experience = model("Experience", experienceSchema);

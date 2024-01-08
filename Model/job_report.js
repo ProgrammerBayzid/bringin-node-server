@@ -15,8 +15,12 @@ const jobreportSchema = Schema(
     ],
     image: String,
     jobid: {
-      type: "ObjectID",
+      type: "ObjectId",
       ref: "job_post",
+    },
+    jobpostuserid: {
+      type: "ObjectId",
+      ref: "Recruiters_profile"
     },
     description: {
       type: String,

@@ -16,29 +16,23 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
-const resume = multer({ storage: storage ,limits: { fileSize: 2000000 }});
+const resume = multer({ storage: storage, limits: { fileSize: 2000000 } });
 
 app.post("/resume", tokenverify, resume.single("resume"), async (req, res) => {
   try {
-    jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-      if (err) {
-        res.json({ message: "invalid token" });
-      } else {
-        const _id = authdata._id;
-        if (req.file && req.file.size < 1048576) {
-          const resumedata = await Resume({
-            resume: req.file,
-            userid: _id,
-            uploadtime: new Date()
-          });
-          const resumefile = await resumedata.save();
-          res.status(200).json({message: "upload successfull"});
-        }else{
-          res.status(400).json({message: "upload maximum 1mb file"});
-        }
-        
-      }
-    });
+    const token = req.token;
+    const _id = req.userId;
+    if (req.file && req.file.size < 1048576) {
+      const resumedata = await Resume({
+        resume: req.file,
+        userid: _id,
+        uploadtime: new Date(),
+      });
+      const resumefile = await resumedata.save();
+      res.status(200).json({ message: "Uploaded successfully" });
+    } else {
+      res.status(400).json({ message: "Uploaded maximum 1mb file" });
+    }
   } catch (error) {
     res.status(400).send(error);
   }
@@ -46,15 +40,10 @@ app.post("/resume", tokenverify, resume.single("resume"), async (req, res) => {
 
 app.get("/resume", tokenverify, async (req, res) => {
   try {
-    jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-      if (err) {
-        res.json({ message: "invalid token" });
-      } else {
-        const _id = authdata._id;
-        const resumeData = await Resume.find({ userid: _id });
-        res.send(resumeData);
-      }
-    });
+    const token = req.token;
+    const _id = req.userId;
+    const resumeData = await Resume.find({ userid: _id });
+    res.send(resumeData);
   } catch (error) {
     res.send(error);
   }
@@ -62,15 +51,13 @@ app.get("/resume", tokenverify, async (req, res) => {
 
 app.delete("/resume", tokenverify, async (req, res) => {
   try {
-    jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-      if (err) {
-        res.json({ message: "invalid token" });
-      } else {
-        const user = authdata._id;
-        const deleteData = await Resume.findOneAndDelete({_id: req.query.id, userid: user});
-        res.status(200).json({message: "delete successfull"});
-      }
+    const token = req.token;
+    const user = req.userId;
+    const deleteData = await Resume.findOneAndDelete({
+      _id: req.query.id,
+      userid: user,
     });
+    res.status(200).json({ message: "Delete successfully" });
   } catch (error) {
     res.send(error);
   }

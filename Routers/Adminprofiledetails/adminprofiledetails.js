@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const multer = require("multer");
 const Profiledata = require("../../Model/Seeker_profile_all_details.js");
+const mongoose = require("mongoose");
 
 const {
   AdminCompanySize,
@@ -21,6 +22,7 @@ const {
 
 const tokenverify = require("../../MiddleWare/tokenverify.js");
 const jwt = require("jsonwebtoken");
+const redis = require("../../utils/redis.js");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -45,10 +47,31 @@ app.post("/admin_exprience", async (req, res) => {
 
 app.get("/admin_exprience", async (req, res) => {
   try {
-    const data = await Experince.find();
+    const data = await Experince.find().sort("sortOrder");
     res.send(data);
   } catch (error) {
     res.send(error);
+  }
+});
+//sort area bulk update
+app.patch("/admin/exprience_update_bulk", async (req, res) => {
+  try {
+    var updateData = req.body;
+
+    console.log(updateData);
+
+    const bulkUpdateOperations = updateData.map(({ id, sortOrder }) => ({
+      updateOne: {
+        filter: { _id: new mongoose.Types.ObjectId(id) },
+        update: { $set: { sortOrder } },
+      },
+    }));
+    await Experince.bulkWrite(bulkUpdateOperations);
+
+    res.status(200).json({ message: "update successfull" });
+  } catch (error) {
+    console.log(error);
+    res.status(404).send(error);
   }
 });
 
@@ -211,13 +234,41 @@ app.delete("/department/:id", async (req, res) => {
 
 app.get("/admincompanysize", async (req, res) => {
   try {
-    const admincompanysizeData = await Companysize.find();
+    const cacheKey = `admincompanysize`;
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) {
+      console.log("sending data from redis");
+      return res.status(200).json(JSON.parse(cachedData));
+    }
+    const admincompanysizeData = await Companysize.find().sort("sortOrder");
     res.send(admincompanysizeData);
+    redis.set(cacheKey, JSON.stringify(admincompanysizeData), 60 * 60 * 24 * 7);
   } catch (error) {
     res.send(error);
   }
 });
+//sort area bulk update
+app.patch("/admin/companysize_update_bulk", async (req, res) => {
+  try {
+    var updateData = req.body;
 
+    console.log(updateData);
+
+    const bulkUpdateOperations = updateData.map(({ id, sortOrder }) => ({
+      updateOne: {
+        filter: { _id: new mongoose.Types.ObjectId(id) },
+        update: { $set: { sortOrder } },
+      },
+    }));
+    await Companysize.bulkWrite(bulkUpdateOperations);
+    const cacheKey = `admincompanysize`;
+    await redis.del(cacheKey);
+    res.status(200).json({ message: "update successfull" });
+  } catch (error) {
+    console.log(error);
+    res.status(404).send(error);
+  }
+});
 app.patch("/company_size_update/:_id", async (req, res) => {
   try {
     const _id = req.params._id;
@@ -232,7 +283,8 @@ app.patch("/company_size_update/:_id", async (req, res) => {
         new: true,
       }
     );
-
+    const cacheKey = `admincompanysize`;
+    await redis.del(cacheKey);
     res.status(200).json({ message: "update successfull" });
   } catch (error) {
     res.status(404).send(error);
@@ -245,6 +297,8 @@ app.delete("/admincompanysize/:id", async (req, res) => {
     if (!req.params.id) {
       return res.status(404).send();
     }
+    const cacheKey = `admincompanysize`;
+    await redis.del(cacheKey);
     res.send(result);
   } catch (error) {
     res.send(error);
@@ -267,7 +321,20 @@ app.post("/seekercompany", async (req, res) => {
 
 app.get("/seekercompany", async (req, res) => {
   try {
+    //get query parameter
+    const name = req?.query?.name;
+
+    // console.log(name);
+    if (name) {
+      //regex for search
+      const data = await SeekeraddCompany.find({
+        name: { $regex: name, $options: "i" },
+      });
+      return res.send(data);
+    }
+
     const data = await SeekeraddCompany.find();
+
     res.send(data);
   } catch (error) {
     res.send(error);
@@ -311,19 +378,13 @@ app.delete("/seekercompany/:id", async (req, res) => {
 
 app.post("/image", tokenverify, image.single("image"), async (req, res) => {
   try {
-    jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-      if (err) {
-        res.json({ message: "invalid token" });
-      } else {
-        const _id = authdata._id;
-        const imagedata = await Image({
-          image: req.file.path,
-          userid: _id,
-        });
-        const imagefile = await imagedata.save();
-        res.status(200).send(imagefile);
-      }
+    const _id = req.userId;
+    const imagedata = await Image({
+      image: req.file.path,
+      userid: _id,
     });
+    const imagefile = await imagedata.save();
+    res.status(200).send(imagefile);
   } catch (error) {
     res.status(400).send(error);
   }
@@ -333,15 +394,9 @@ app.post("/image", tokenverify, image.single("image"), async (req, res) => {
 
 app.get("/image/:_id", tokenverify, async (req, res) => {
   try {
-    jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-      if (err) {
-        res.json({ message: "invalid token" });
-      } else {
-        const _id = authdata._id;
-        const data = await Image.findOne({ userid: _id });
-        res.send(data);
-      }
-    });
+    const _id = req.userId;
+    const data = await Image.findOne({ userid: _id });
+    res.send(data);
   } catch (error) {
     res.send(error);
   }

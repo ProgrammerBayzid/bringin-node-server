@@ -2,14 +2,10 @@ const express = require("express");
 const app = express();
 const multer = require("multer");
 
-const {
- Cv
-} = require("../../Model/adminprofiledetails");
+const { Cv } = require("../../Model/adminprofiledetails");
 
 const tokenverify = require("../../MiddleWare/tokenverify.js");
 const jwt = require("jsonwebtoken");
-
-
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -22,50 +18,34 @@ const storage = multer.diskStorage({
 });
 const cv = multer({ storage: storage });
 
-// cv post api 
+// cv post api
 
 app.post("/cv", tokenverify, cv.single("cv"), async (req, res) => {
-    try {
-      jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-        if (err) {
-          res.json({ message: "invalid token" });
-        } else {
-          const _id = authdata._id;
-          const cvdata = await Cv({
-            cv: req.file.path,
-            userid: _id,
-          });
-          const cvfile = await cvdata.save();
-          res.status(200).send(cvfile);
-        }
-      });
-    } catch (error) {
-      res.status(400).send(error);
-    }
-  });
-  
-  // cv get api
-  
-  
-  app.get("/cv/:_id", tokenverify, async (req, res) => {
-    try {
-      jwt.verify(req.token, process.env.ACCESS_TOKEN, async (err, authdata) => {
-        if (err) {
-          res.json({ message: "invalid token" });
-        } else {
-          const _id = authdata._id;
-          const data = await Cv.findOne({ userid: _id });
-          res.send(data);
-        }
-      });
-    } catch (error) {
-      res.send(error);
-    }
-  });
-  
-  
+  try {
+    const token = req.token;
+    const _id = req.userId;
+    const cvdata = await Cv({
+      cv: req.file.path,
+      userid: _id,
+    });
+    const cvfile = await cvdata.save();
+    res.status(200).send(cvfile);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
 
+// cv get api
 
-
+app.get("/cv/:_id", tokenverify, async (req, res) => {
+  try {
+    const token = req.token;
+    const _id = req.userId;
+    const data = await Cv.findOne({ userid: _id });
+    res.send(data);
+  } catch (error) {
+    res.send(error);
+  }
+});
 
 module.exports = app;

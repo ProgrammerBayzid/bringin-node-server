@@ -9,6 +9,7 @@ const citySchema = Schema(
         ref: "Division",
       },
     ],
+    sortOrder: Number,
   },
   { timestamps: true }
 );
@@ -20,6 +21,7 @@ const divisionSchema = Schema(
       type: "ObjectId",
       ref: "City",
     },
+    sortOrder: Number,
   },
   { timestamps: true }
 );

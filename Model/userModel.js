@@ -33,7 +33,7 @@ const userSchema = Schema(
     },
     deatofbirth: {
       type: Date,
-      default: new Date(),
+      default: null,
     },
     other: {
       viewjob: { type: Number, default: 0 },
@@ -44,15 +44,15 @@ const userSchema = Schema(
       total_step: { type: Number, default: 7 },
       incomplete: { type: Number, default: 5 },
       complete: { type: Number, default: 2 },
-      online: {type : Boolean, default: false},
-      offlinedate:{
+      online: { type: Boolean, default: false },
+      offlinedate: {
         type: Number,
-        default: new Date().getTime()
+        default: new Date().getTime(),
       },
       lastfunctionalarea: {
         type: "ObjectId",
         ref: "FunctionalArea",
-        default: "64a2d832e19e64570285c57b"
+        default: "64a2d832e19e64570285c57b",
       },
       pushnotification: String,
       full_profile: {
@@ -110,7 +110,7 @@ userSchema.methods.generateJWT = function () {
       number: this.number,
     },
     process.env.ACCESS_TOKEN,
-    { expiresIn: "7d" }
+    { expiresIn: "1y" }
   );
   return token;
 };
